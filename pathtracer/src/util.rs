@@ -23,10 +23,6 @@ pub fn colour_scale_sqrt(colour: &[u32], scale: u32) -> [u8; 3] {
 	]
 }
 
-pub fn random_vec() -> Vector3D<f32> {
-	Vector3D::new(random(), random(), random())
-}
-
 pub fn random_in_range(min: f32, max: f32) -> f32 {
 	min + (max - min) * random::<f32>()
 }
@@ -50,4 +46,13 @@ pub fn random_in_unit_sphere() -> Vector3D<f32> {
 
 pub fn random_unit_vector() -> Vector3D<f32> {
 	random_in_unit_sphere().normalize()
+}
+
+pub fn random_in_unit_disc() -> Vector3D<f32> {
+	loop {
+		let p = Vector3D::new(random_in_range(-1.0, 1.0), random_in_range(-1.0, 1.0), 0.0);
+		if p.square_length() < 1.0 {
+			return p;
+		}
+	}
 }

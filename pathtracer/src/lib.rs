@@ -1,35 +1,37 @@
-mod camera;
+pub mod camera;
+pub mod default_scene;
 pub mod hittable;
 pub mod material;
 mod ray;
 mod util;
 
 use camera::Camera;
-use euclid::default::Point3D;
 use hittable::{HittableObject, Scene};
 
 #[derive(Debug)]
 pub struct Pathtracer {
-	canvas_width: u32,
-	canvas_height: u32,
-	max_bounces: u32,
-	camera: Camera,
-	scene: Scene,
-	pixels: Box<[u32]>,
-	n_iterations: u32,
+	pub canvas_width: u32,
+	pub canvas_height: u32,
+	pub max_bounces: u32,
+	pub camera: Camera,
+	pub scene: Scene,
+	pub pixels: Box<[u32]>,
+	pub n_iterations: u32,
 }
 
 impl Pathtracer {
-	pub fn new(width: u32, height: u32, max_bounces: u32, scene: Vec<HittableObject>) -> Self {
+	pub fn new(
+		width: u32,
+		height: u32,
+		max_bounces: u32,
+		camera: Camera,
+		scene: Vec<HittableObject>,
+	) -> Self {
 		Self {
 			canvas_width: width,
 			canvas_height: height,
 			max_bounces,
-			camera: Camera::new(
-				width as f32 / height as f32,
-				Point3D::new(0.0, 1.0, 0.0),
-				1.0,
-			),
+			camera,
 			scene: Scene(scene),
 			pixels: vec![0; (width * height * 4) as usize].into_boxed_slice(),
 			n_iterations: 0,
