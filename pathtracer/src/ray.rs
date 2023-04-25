@@ -2,7 +2,7 @@ use euclid::default::{Point3D, Vector3D};
 
 use crate::{
 	hittable::{Hittable, Scene},
-	util,
+	material,
 };
 
 #[derive(Debug)]
@@ -13,7 +13,10 @@ pub struct Ray {
 
 impl Ray {
 	pub fn new(origin: Point3D<f32>, dir: Vector3D<f32>) -> Self {
-		Self { origin, dir }
+		Self {
+			origin,
+			dir: dir.normalize(),
+		}
 	}
 
 	#[inline]
@@ -27,9 +30,11 @@ impl Ray {
 		}
 
 		if let Some(hit) = scene.hit(self, 0.001..f32::MAX) {
-			let target = hit.point + hit.normal + util::random_unit_vector();
-			let ray = Ray::new(hit.point, target - hit.point);
-			ray.cast(scene, depth - 1) * 0.5
+			if let Some((ray, attenuation)) = material::bounce(self, &hit) {
+				ray.cast(scene, depth - 1).component_mul(attenuation)
+			} else {
+				Vector3D::zero()
+			}
 		} else {
 			Vector3D::lerp(
 				Vector3D::new(0.5, 0.7, 1.0),

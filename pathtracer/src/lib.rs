@@ -1,5 +1,6 @@
 mod camera;
 pub mod hittable;
+pub mod material;
 mod ray;
 mod util;
 
@@ -24,7 +25,11 @@ impl Pathtracer {
 			canvas_width: width,
 			canvas_height: height,
 			max_bounces,
-			camera: Camera::new(width as f32 / height as f32, Point3D::zero(), 1.0),
+			camera: Camera::new(
+				width as f32 / height as f32,
+				Point3D::new(0.0, 1.0, 0.0),
+				1.0,
+			),
 			scene: Scene(scene),
 			pixels: vec![0; (width * height * 4) as usize].into_boxed_slice(),
 			n_iterations: 0,

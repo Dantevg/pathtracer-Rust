@@ -3,9 +3,10 @@ use std::{
 	thread,
 };
 
-use euclid::default::Point3D;
+use euclid::default::{Point3D, Vector3D};
 use pathtracer::{
 	hittable::{HittableObject, Sphere},
+	material::Material,
 	Pathtracer,
 };
 use pixels::{Pixels, SurfaceTexture};
@@ -29,14 +30,20 @@ fn main() {
 		.build(&event_loop)
 		.unwrap();
 
+	let lambertian_material = Material {
+		albedo: Vector3D::splat(0.5),
+	};
+
 	let scene = vec![
 		HittableObject::Sphere(Sphere {
 			centre: Point3D::new(0.0, 0.0, -1.0),
 			radius: 0.5,
+			material: lambertian_material,
 		}),
 		HittableObject::Sphere(Sphere {
 			centre: Point3D::new(0.0, -100.5, -1.0),
 			radius: 100.0,
+			material: lambertian_material,
 		}),
 	];
 

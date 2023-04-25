@@ -2,21 +2,28 @@ use core::ops::Range;
 
 use euclid::default::{Point3D, Vector3D};
 
-use crate::ray::Ray;
+use crate::{material::Material, ray::Ray};
 
 #[derive(Debug)]
-pub struct Hit {
+pub struct Hit<'a> {
 	pub point: Point3D<f32>,
 	pub normal: Vector3D<f32>,
 	pub distance: f32,
+	pub material: &'a Material,
 }
 
-impl Hit {
-	pub fn new(point: Point3D<f32>, normal: Vector3D<f32>, distance: f32) -> Self {
+impl<'a> Hit<'a> {
+	pub fn new(
+		point: Point3D<f32>,
+		normal: Vector3D<f32>,
+		distance: f32,
+		material: &'a Material,
+	) -> Self {
 		Self {
 			point,
 			normal,
 			distance,
+			material,
 		}
 	}
 }
@@ -62,6 +69,7 @@ impl Hittable for Scene {
 pub struct Sphere {
 	pub centre: Point3D<f32>,
 	pub radius: f32,
+	pub material: Material,
 }
 
 impl Hittable for Sphere {
@@ -87,11 +95,6 @@ impl Hittable for Sphere {
 
 		let point = ray.at(distance);
 		let outward_normal = (point - self.centre) / self.radius;
-		let normal = if ray.dir.dot(outward_normal) < 0.0 {
-			outward_normal
-		} else {
-			-outward_normal
-		};
-		Some(Hit::new(point, normal, distance))
+		Some(Hit::new(point, outward_normal, distance, &self.material))
 	}
 }

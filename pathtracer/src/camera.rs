@@ -13,9 +13,9 @@ pub struct Camera {
 impl Camera {
 	pub fn new(aspect_ratio: f32, pos: Point3D<f32>, focal_length: f32) -> Self {
 		let horizontal = Vector3D::new(2.0 * aspect_ratio, 0.0, 0.0);
-		let vertical = Vector3D::new(0.0, 2.0, 0.0);
+		let vertical = Vector3D::new(0.0, 0.0, 2.0);
 		let lower_left_corner =
-			pos - horizontal / 2.0 - vertical / 2.0 + Vector3D::new(0.0, 0.0, -focal_length);
+			pos - horizontal / 2.0 - vertical / 2.0 + Vector3D::new(0.0, focal_length, 0.0);
 		Self {
 			pos,
 			horizontal,
