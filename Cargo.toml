@@ -1,0 +1,3 @@
+[workspace]
+members = ["pathtracer", "pathtracer-ui", "pathtracer-cli"]
+resolver = "2"

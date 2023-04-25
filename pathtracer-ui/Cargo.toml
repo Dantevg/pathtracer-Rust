@@ -1,0 +1,12 @@
+[package]
+name = "pathtracer-ui"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+pathtracer = { path = "../pathtracer" }
+pixels = "0.12.1"
+winit = "0.28.3"
+euclid = "0.22.9"

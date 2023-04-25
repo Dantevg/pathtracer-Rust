@@ -1,0 +1,13 @@
+[package]
+name = "pathtracer-cli"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+pathtracer = { path = "../pathtracer" }
+clap = { version = "4.2.4", features = ["derive"] }
+png = "0.17.8"
+euclid = "0.22.9"
+indicatif = "0.17.3"
