@@ -1,13 +1,12 @@
 use crate::{
-	camera::Camera,
 	hittable::{HittableObject, Sphere},
 	material::Material,
 };
 use euclid::default::{Point3D, Vector3D};
 
-pub fn make_scene(width: f32, height: f32) -> (Vec<HittableObject>, Camera) {
+pub fn make_scene() -> Vec<HittableObject> {
 	let material_ground = Material {
-		albedo: Vector3D::new(0.8, 0.8, 0.0),
+		albedo: Vector3D::new(0.2, 0.3, 0.1),
 		metallic: 0.0,
 		specular: 0.0,
 		roughness: 0.0,
@@ -39,7 +38,7 @@ pub fn make_scene(width: f32, height: f32) -> (Vec<HittableObject>, Camera) {
 		ior: 0.0,
 	};
 
-	let scene = vec![
+	vec![
 		HittableObject::Sphere(Sphere {
 			centre: Point3D::new(0.0, 0.0, 0.0),
 			radius: 0.5,
@@ -60,18 +59,5 @@ pub fn make_scene(width: f32, height: f32) -> (Vec<HittableObject>, Camera) {
 			radius: 0.5,
 			material: material_right,
 		}),
-	];
-
-	let look_from = Point3D::new(-2.0, -2.0, 1.5);
-	let look_at = Point3D::new(0.0, 0.0, 0.0);
-	let camera = Camera::new(
-		look_from,
-		(look_at - look_from).normalize(),
-		width / height,
-		60.0,
-		0.5,
-		(look_at - look_from).length(),
-	);
-
-	(scene, camera)
+	]
 }

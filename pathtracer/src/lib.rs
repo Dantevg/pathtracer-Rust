@@ -100,3 +100,15 @@ impl Pathtracer {
 		self.draw(canvas);
 	}
 }
+
+pub fn draw_pixels_to_canvas(pixels: &[u32], canvas: &mut [u8], scale: u32) {
+	debug_assert_eq!(pixels.len(), canvas.len());
+
+	for idx in (0..pixels.len()).step_by(4) {
+		let output_colour = util::colour_scale_sqrt(&pixels[idx..idx + 3], scale);
+		canvas[idx + 0] = output_colour[0];
+		canvas[idx + 1] = output_colour[1];
+		canvas[idx + 2] = output_colour[2];
+		canvas[idx + 3] = 255;
+	}
+}
