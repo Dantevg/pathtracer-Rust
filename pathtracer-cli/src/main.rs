@@ -85,7 +85,7 @@ fn main() {
 			}
 			pathtracers.push(scope.spawn(|| {
 				let mut scene = default_scene::make_scene();
-				let look_from = Point3D::new(-2.0, -2.0, 1.5);
+				let look_from = Point3D::new(-1.0, -2.0, 1.5);
 				let look_at = Point3D::new(0.0, 0.0, 0.0);
 				scene.camera = Camera::new(
 					look_from,

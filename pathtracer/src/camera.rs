@@ -1,5 +1,3 @@
-use core::f32::consts::PI;
-
 use euclid::default::{Point3D, Vector3D};
 
 use crate::{ray::Ray, util};
@@ -25,7 +23,7 @@ impl Camera {
 		aperture: f32,
 		focus_distance: f32,
 	) -> Self {
-		let h = (fov / 360.0 * PI).tan();
+		let h = (fov.to_radians() / 2.0).tan();
 		let u = dir.cross(Vector3D::new(0.0, 0.0, 1.0));
 		let v = u.cross(dir);
 

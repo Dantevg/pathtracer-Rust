@@ -1,3 +1,5 @@
+use core::f32::consts::PI;
+
 use euclid::default::Vector3D;
 
 use crate::{
@@ -54,11 +56,11 @@ impl Material {
 		}
 	}
 
-	pub fn dielectric(texture: AnyTexture, specular: f32, roughness: f32) -> Material {
+	pub fn dielectric(texture: AnyTexture, roughness: f32) -> Material {
 		Material {
 			texture,
 			metallic: 0.0,
-			specular,
+			specular: 1.0,
 			roughness,
 			emission: 0.0,
 			transparency: 0.0,
@@ -67,7 +69,15 @@ impl Material {
 	}
 
 	pub fn diffuse(texture: AnyTexture) -> Material {
-		Material::dielectric(texture, 0.0, 0.0)
+		Material {
+			texture,
+			metallic: 0.0,
+			specular: 0.0,
+			roughness: 0.0,
+			emission: 0.0,
+			transparency: 0.0,
+			ior: 0.0,
+		}
 	}
 
 	pub fn transparent(texture: AnyTexture, roughness: f32, ior: f32) -> Material {
@@ -144,7 +154,7 @@ fn specular(ray: &Ray, hit: &Hit) -> (Option<Ray>, Vector3D<f32>) {
 	}
 }
 
-fn diffuse(_ray: &Ray, hit: &Hit) -> (Option<Ray>, Vector3D<f32>) {
+fn diffuse(ray: &Ray, hit: &Hit) -> (Option<Ray>, Vector3D<f32>) {
 	let scattered_dir = hit.normal + util::random_unit_vector();
 	(
 		Some(Ray::new(hit.point, scattered_dir)),

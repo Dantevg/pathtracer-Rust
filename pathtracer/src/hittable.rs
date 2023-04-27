@@ -40,12 +40,14 @@ pub trait Hittable {
 #[derive(Debug)]
 pub enum HittableObject {
 	Sphere(Sphere),
+	Triangle(Triangle),
 }
 
 impl Hittable for HittableObject {
 	fn hit(&self, ray: &Ray, range: Range<f32>) -> Option<Hit> {
 		match self {
 			HittableObject::Sphere(s) => s.hit(ray, range),
+			HittableObject::Triangle(t) => t.hit(ray, range),
 		}
 	}
 }
@@ -55,14 +57,6 @@ pub struct Sphere {
 	pub centre: Point3D<f32>,
 	pub radius: f32,
 	pub material: Material,
-}
-
-impl Sphere {
-	fn uv(&self, point: Vector3D<f32>) -> Vector2D<f32> {
-		let theta = (-point.z).acos();
-		let phi = (-point.y).atan2(point.x) + PI;
-		Vector2D::new(phi / (2.0 * PI), theta / PI)
-	}
 }
 
 impl From<Sphere> for HittableObject {
@@ -94,12 +88,62 @@ impl Hittable for Sphere {
 
 		let point = ray.at(distance);
 		let outward_normal = (point - self.centre) / self.radius;
+		let theta = (-outward_normal.z).acos();
+		let phi = (-outward_normal.y).atan2(outward_normal.x) + PI;
+		let u = phi / (2.0 * PI);
+		let v = theta / PI;
+
 		Some(Hit::new(
 			point,
 			outward_normal,
 			distance,
 			&self.material,
-			self.uv(outward_normal),
+			Vector2D::new(u, v),
 		))
+	}
+}
+
+#[derive(Debug, Clone)]
+pub struct Triangle {
+	pub a: Point3D<f32>,
+	pub b: Point3D<f32>,
+	pub c: Point3D<f32>,
+	pub material: Material,
+}
+
+impl From<Triangle> for HittableObject {
+	fn from(value: Triangle) -> Self {
+		HittableObject::Triangle(value)
+	}
+}
+
+impl Hittable for Triangle {
+	// https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
+	// https://stackoverflow.com/a/42752998
+	fn hit(&self, ray: &Ray, range: Range<f32>) -> Option<Hit> {
+		let edge1 = self.b - self.a;
+		let edge2 = self.c - self.a;
+		let normal = edge1.cross(edge2);
+		let det = -ray.dir.dot(normal);
+		if det > -f32::EPSILON && det < f32::EPSILON {
+			return None; // ray is parallel
+		}
+
+		let ao = ray.origin - self.a;
+		let dao = ao.cross(ray.dir);
+		let u = edge2.dot(dao) / det;
+		let v = -edge1.dot(dao) / det;
+		let distance = ao.dot(normal) / det;
+		if range.contains(&distance) && u >= 0.0 && v >= 0.0 && u + v <= 1.0 {
+			Some(Hit::new(
+				ray.at(distance),
+				normal.normalize(),
+				distance,
+				&self.material,
+				Vector2D::new(u, v),
+			))
+		} else {
+			None
+		}
 	}
 }

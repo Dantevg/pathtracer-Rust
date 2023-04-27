@@ -1,6 +1,6 @@
 use crate::{
 	camera::Camera,
-	hittable::{HittableObject, Sphere},
+	hittable::{Sphere, Triangle},
 	material::Material,
 	scene::Scene,
 	texture::{CheckerTexture, SolidColour},
@@ -16,37 +16,47 @@ pub fn make_scene() -> Scene {
 		)
 		.into(),
 	);
-	let material_centre = Material::diffuse(SolidColour::new(0.1, 0.2, 0.5).into());
-	let material_left = Material::transparent(SolidColour::new(0.8, 0.8, 0.8).into(), 0.0, 1.5);
-	let material_right = Material::metal(SolidColour::new(0.8, 0.6, 0.2).into(), 0.3);
-	let material_top = Material::emissive(SolidColour::new(1.0, 1.0, 1.0).into());
 
 	let objects = vec![
-		HittableObject::Sphere(Sphere {
+		Sphere {
 			centre: Point3D::new(0.0, 0.0, -100.5),
 			radius: 100.0,
 			material: material_ground,
-		}),
-		HittableObject::Sphere(Sphere {
+		}
+		.into(),
+		Sphere {
 			centre: Point3D::new(0.0, 0.0, 0.0),
 			radius: 0.5,
-			material: material_centre,
-		}),
-		HittableObject::Sphere(Sphere {
+			material: Material::diffuse(SolidColour::new(0.1, 0.2, 0.5).into()),
+		}
+		.into(),
+		Sphere {
 			centre: Point3D::new(-1.0, 0.0, 0.0),
 			radius: 0.5,
-			material: material_left,
-		}),
-		HittableObject::Sphere(Sphere {
+			material: Material::transparent(SolidColour::new(0.8, 0.8, 0.8).into(), 0.0, 1.5),
+		}
+		.into(),
+		Sphere {
 			centre: Point3D::new(1.0, 0.0, 0.0),
 			radius: 0.5,
-			material: material_right,
-		}),
-		HittableObject::Sphere(Sphere {
+			material: Material::metal(SolidColour::new(0.8, 0.6, 0.2).into(), 0.3),
+		}
+		.into(),
+		Sphere {
 			centre: Point3D::new(0.0, 0.0, 5.0),
 			radius: 3.0,
-			material: material_top,
-		}),
+			material: Material::emissive(SolidColour::new(1.0, 1.0, 1.0).into()),
+		}
+		.into(),
+		Triangle {
+			a: Point3D::new(0.5, 0.0, 0.0),
+			b: Point3D::new(0.5, -1.0, 0.0),
+			c: Point3D::new(0.5, 0.0, 1.0),
+			material: Material::transparent(SolidColour::new(0.8, 0.8, 0.8).into(), 0.0, 1.5),
+			// material: Material::diffuse(SolidColour::new(1.0, 1.0, 1.0).into()),
+			// material: Material::dielectric(SolidColour::new(1.0, 1.0, 1.0).into(), 0.2),
+		}
+		.into(),
 	];
 
 	let look_from = Point3D::new(-2.0, -2.0, 1.5);
@@ -63,6 +73,6 @@ pub fn make_scene() -> Scene {
 	Scene {
 		objects,
 		camera,
-		background_colour: Vector3D::new(0.0, 0.0, 0.0),
+		background_colour: Vector3D::new(0.1, 0.13, 0.2),
 	}
 }

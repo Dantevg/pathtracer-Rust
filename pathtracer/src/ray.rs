@@ -26,20 +26,15 @@ impl Ray {
 			return Vector3D::zero();
 		}
 
-		if let Some(hit) = scene.hit(self, 0.001..f32::MAX) {
-			let (ray, colour) = material::bounce(self, &hit);
-			if let Some(ray) = ray {
-				ray.cast(scene, background, depth - 1).component_mul(colour)
-			} else {
-				colour
-			}
+		let Some(hit) = scene.hit(self, 0.001..f32::MAX) else {
+			return background
+		};
+
+		let (ray, colour) = material::bounce(self, &hit);
+		if let Some(ray) = ray {
+			ray.cast(scene, background, depth - 1).component_mul(colour)
 		} else {
-			background
-			// Vector3D::lerp(
-			// 	Vector3D::new(0.5, 0.7, 1.0),
-			// 	Vector3D::new(1.0, 1.0, 1.0),
-			// 	0.5 * (-self.dir.normalize().z + 1.0),
-			// )
+			colour
 		}
 	}
 }
