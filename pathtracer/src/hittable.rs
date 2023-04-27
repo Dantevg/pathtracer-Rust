@@ -1,6 +1,6 @@
-use core::ops::Range;
+use core::{f32::consts::PI, ops::Range};
 
-use euclid::default::{Point3D, Vector3D};
+use euclid::default::{Point3D, Vector2D, Vector3D};
 
 use crate::{material::Material, ray::Ray};
 
@@ -10,6 +10,7 @@ pub struct Hit<'a> {
 	pub normal: Vector3D<f32>,
 	pub distance: f32,
 	pub material: &'a Material,
+	pub uv: Vector2D<f32>,
 }
 
 impl<'a> Hit<'a> {
@@ -18,12 +19,14 @@ impl<'a> Hit<'a> {
 		normal: Vector3D<f32>,
 		distance: f32,
 		material: &'a Material,
+		uv: Vector2D<f32>,
 	) -> Self {
 		Self {
 			point,
 			normal,
 			distance,
 			material,
+			uv,
 		}
 	}
 }
@@ -65,11 +68,25 @@ impl Hittable for Scene {
 	}
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Sphere {
 	pub centre: Point3D<f32>,
 	pub radius: f32,
 	pub material: Material,
+}
+
+impl Sphere {
+	fn uv(&self, point: Vector3D<f32>) -> Vector2D<f32> {
+		let theta = (-point.z).acos();
+		let phi = (-point.y).atan2(point.x) + PI;
+		Vector2D::new(phi / (2.0 * PI), theta / PI)
+	}
+}
+
+impl From<Sphere> for HittableObject {
+	fn from(value: Sphere) -> Self {
+		HittableObject::Sphere(value)
+	}
 }
 
 impl Hittable for Sphere {
@@ -95,6 +112,12 @@ impl Hittable for Sphere {
 
 		let point = ray.at(distance);
 		let outward_normal = (point - self.centre) / self.radius;
-		Some(Hit::new(point, outward_normal, distance, &self.material))
+		Some(Hit::new(
+			point,
+			outward_normal,
+			distance,
+			&self.material,
+			self.uv(outward_normal),
+		))
 	}
 }

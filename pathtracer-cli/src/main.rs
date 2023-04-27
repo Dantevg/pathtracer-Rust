@@ -118,7 +118,6 @@ fn main() {
 	pathtracer::draw_pixels_to_canvas(&shared_pixels, &mut canvas, args.samples_per_pixel);
 
 	progress_bar.lock().unwrap().finish_with_message("done");
-
 	println!("render time: {:?}", render_time.duration_since(start_time));
 
 	let file = File::create(args.output).unwrap();

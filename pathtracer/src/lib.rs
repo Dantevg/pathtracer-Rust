@@ -3,6 +3,7 @@ pub mod default_scene;
 pub mod hittable;
 pub mod material;
 mod ray;
+pub mod texture;
 mod util;
 
 use camera::Camera;
@@ -61,22 +62,7 @@ impl Pathtracer {
 	}
 
 	pub fn draw(&self, canvas: &mut [u8]) {
-		debug_assert_eq!(
-			canvas.len(),
-			(self.canvas_width * self.canvas_height * 4) as usize
-		);
-
-		for y in 0..self.canvas_height {
-			for x in 0..self.canvas_width {
-				let idx = util::coords_to_idx(x, y, self.canvas_width);
-				let output_colour =
-					util::colour_scale_sqrt(&self.pixels[idx..idx + 3], self.n_iterations);
-				canvas[idx + 0] = output_colour[0];
-				canvas[idx + 1] = output_colour[1];
-				canvas[idx + 2] = output_colour[2];
-				canvas[idx + 3] = 255;
-			}
-		}
+		draw_pixels_to_canvas(&self.pixels, canvas, self.n_iterations);
 	}
 
 	pub fn render(
@@ -102,7 +88,7 @@ impl Pathtracer {
 }
 
 pub fn draw_pixels_to_canvas(pixels: &[u32], canvas: &mut [u8], scale: u32) {
-	debug_assert_eq!(pixels.len(), canvas.len());
+	assert_eq!(pixels.len(), canvas.len());
 
 	for idx in (0..pixels.len()).step_by(4) {
 		let output_colour = util::colour_scale_sqrt(&pixels[idx..idx + 3], scale);

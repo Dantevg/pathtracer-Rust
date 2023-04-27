@@ -39,7 +39,7 @@ impl Ray {
 			Vector3D::lerp(
 				Vector3D::new(0.5, 0.7, 1.0),
 				Vector3D::new(1.0, 1.0, 1.0),
-				0.5 * (-self.dir.normalize().y + 1.0),
+				0.5 * (-self.dir.normalize().z + 1.0),
 			)
 		}
 	}

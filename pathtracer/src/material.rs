@@ -1,11 +1,16 @@
 use euclid::default::Vector3D;
 
-use crate::{hittable::Hit, ray::Ray, util};
+use crate::{
+	hittable::Hit,
+	ray::Ray,
+	texture::{AnyTexture, Texture},
+	util,
+};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Material {
-	/// The base colour of this material.
-	pub albedo: Vector3D<f32>,
+	/// The base (albedo) texture of this material.
+	pub texture: AnyTexture,
 
 	/// How metallic this material is. A value of `1.0` gives a fully specular
 	/// reflection tinted with the base colour, without diffuse reflection or
@@ -54,7 +59,7 @@ fn metallic(ray: &Ray, hit: &Hit) -> Option<(Ray, Vector3D<f32>)> {
 		reflected_dir + util::random_in_unit_sphere() * hit.material.roughness,
 	);
 	if new_ray.dir.dot(hit.normal) > 0.0 {
-		Some((new_ray, hit.material.albedo))
+		Some((new_ray, hit.material.texture.colour(hit.uv, hit.point)))
 	} else {
 		None
 	}
@@ -75,7 +80,10 @@ fn specular(ray: &Ray, hit: &Hit) -> Option<(Ray, Vector3D<f32>)> {
 
 fn diffuse(_ray: &Ray, hit: &Hit) -> Option<(Ray, Vector3D<f32>)> {
 	let scattered_dir = hit.normal + util::random_unit_vector();
-	Some((Ray::new(hit.point, scattered_dir), hit.material.albedo))
+	Some((
+		Ray::new(hit.point, scattered_dir),
+		hit.material.texture.colour(hit.uv, hit.point),
+	))
 }
 
 fn refract(ray: &Ray, hit: &Hit) -> Option<(Ray, Vector3D<f32>)> {
