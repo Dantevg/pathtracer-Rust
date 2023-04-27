@@ -40,18 +40,18 @@ struct Args {
 }
 
 fn move_cam(pt: &mut Pathtracer, by: Vector3D<f32>) {
-	let pos = pt.camera.pos();
-	let dir = pt.camera.dir();
-	pt.camera.set_pos(pos + dir.component_mul(by));
+	let pos = pt.scene.camera.pos();
+	let dir = pt.scene.camera.dir();
+	pt.scene.camera.set_pos(pos + dir.component_mul(by));
 	pt.n_iterations = 0;
 	pt.pixels.fill(0);
 }
 
 fn create_pt(args: &Args) -> Pathtracer {
-	let scene = default_scene::make_scene();
+	let mut scene = default_scene::make_scene();
 	let look_from = Point3D::new(-2.0, -2.0, 1.5);
 	let look_at = Point3D::new(0.0, 0.0, 0.0);
-	let camera = Camera::new(
+	scene.camera = Camera::new(
 		look_from,
 		(look_at - look_from).normalize(),
 		args.width as f32 / args.height as f32,
@@ -60,7 +60,7 @@ fn create_pt(args: &Args) -> Pathtracer {
 		(look_at - look_from).length(),
 	);
 
-	Pathtracer::new(args.width, args.height, args.max_bounces, camera, scene)
+	Pathtracer::new(args.width, args.height, args.max_bounces, scene)
 }
 
 fn create_pixels(args: &Args, window: &Window) -> Pixels {

@@ -29,6 +29,9 @@ pub struct Material {
 	/// will be fully rough, while reflections at `0.0` are completely sharp.
 	pub roughness: f32,
 
+	/// The amount of light this texture emits.
+	pub emission: f32,
+
 	/// How transparent the material is. At `1.0`, the material is fully
 	/// transparent and will only reflect at grazing angles. At `0.0`, the
 	/// material consists of a diffuse or specular reflection layer.
@@ -38,8 +41,64 @@ pub struct Material {
 	pub ior: f32,
 }
 
-pub fn bounce(ray: &Ray, hit: &Hit) -> Option<(Ray, Vector3D<f32>)> {
-	if rand::random::<f32>() < hit.material.metallic {
+impl Material {
+	pub fn metal(texture: AnyTexture, roughness: f32) -> Material {
+		Material {
+			texture,
+			metallic: 1.0,
+			specular: 0.0,
+			roughness,
+			emission: 0.0,
+			transparency: 0.0,
+			ior: 0.0,
+		}
+	}
+
+	pub fn dielectric(texture: AnyTexture, specular: f32, roughness: f32) -> Material {
+		Material {
+			texture,
+			metallic: 0.0,
+			specular,
+			roughness,
+			emission: 0.0,
+			transparency: 0.0,
+			ior: 0.0,
+		}
+	}
+
+	pub fn diffuse(texture: AnyTexture) -> Material {
+		Material::dielectric(texture, 0.0, 0.0)
+	}
+
+	pub fn transparent(texture: AnyTexture, roughness: f32, ior: f32) -> Material {
+		Material {
+			texture,
+			metallic: 0.0,
+			specular: 1.0,
+			roughness,
+			emission: 0.0,
+			transparency: 1.0,
+			ior,
+		}
+	}
+
+	pub fn emissive(texture: AnyTexture) -> Material {
+		Material {
+			texture,
+			metallic: 0.0,
+			specular: 0.0,
+			roughness: 0.0,
+			emission: 1.0,
+			transparency: 0.0,
+			ior: 0.0,
+		}
+	}
+}
+
+pub fn bounce(ray: &Ray, hit: &Hit) -> (Option<Ray>, Vector3D<f32>) {
+	if rand::random::<f32>() < hit.material.emission {
+		emissive(ray, hit)
+	} else if rand::random::<f32>() < hit.material.metallic {
 		metallic(ray, hit)
 	} else if rand::random::<f32>() < hit.material.specular {
 		if rand::random::<f32>() < (1.0 - schlick(ray, hit)) * hit.material.transparency {
@@ -52,41 +111,48 @@ pub fn bounce(ray: &Ray, hit: &Hit) -> Option<(Ray, Vector3D<f32>)> {
 	}
 }
 
-fn metallic(ray: &Ray, hit: &Hit) -> Option<(Ray, Vector3D<f32>)> {
+fn emissive(_ray: &Ray, hit: &Hit) -> (Option<Ray>, Vector3D<f32>) {
+	(None, hit.material.texture.colour(hit.uv, hit.point))
+}
+
+fn metallic(ray: &Ray, hit: &Hit) -> (Option<Ray>, Vector3D<f32>) {
 	let reflected_dir = ray.dir.reflect(hit.normal);
 	let new_ray = Ray::new(
 		hit.point,
 		reflected_dir + util::random_in_unit_sphere() * hit.material.roughness,
 	);
 	if new_ray.dir.dot(hit.normal) > 0.0 {
-		Some((new_ray, hit.material.texture.colour(hit.uv, hit.point)))
+		(
+			Some(new_ray),
+			hit.material.texture.colour(hit.uv, hit.point),
+		)
 	} else {
-		None
+		(None, Vector3D::zero())
 	}
 }
 
-fn specular(ray: &Ray, hit: &Hit) -> Option<(Ray, Vector3D<f32>)> {
+fn specular(ray: &Ray, hit: &Hit) -> (Option<Ray>, Vector3D<f32>) {
 	let reflected_dir = ray.dir.reflect(hit.normal);
 	let new_ray = Ray::new(
 		hit.point,
 		reflected_dir + util::random_in_unit_sphere() * hit.material.roughness,
 	);
 	if new_ray.dir.dot(hit.normal) > 0.0 {
-		Some((new_ray, Vector3D::one()))
+		(Some(new_ray), Vector3D::one())
 	} else {
-		None
+		(None, Vector3D::zero())
 	}
 }
 
-fn diffuse(_ray: &Ray, hit: &Hit) -> Option<(Ray, Vector3D<f32>)> {
+fn diffuse(_ray: &Ray, hit: &Hit) -> (Option<Ray>, Vector3D<f32>) {
 	let scattered_dir = hit.normal + util::random_unit_vector();
-	Some((
-		Ray::new(hit.point, scattered_dir),
+	(
+		Some(Ray::new(hit.point, scattered_dir)),
 		hit.material.texture.colour(hit.uv, hit.point),
-	))
+	)
 }
 
-fn refract(ray: &Ray, hit: &Hit) -> Option<(Ray, Vector3D<f32>)> {
+fn refract(ray: &Ray, hit: &Hit) -> (Option<Ray>, Vector3D<f32>) {
 	let front_face = ray.dir.dot(hit.normal) < 0.0;
 	let (outward_normal, ior) = if front_face {
 		(hit.normal, 1.0 / hit.material.ior)
@@ -103,10 +169,10 @@ fn refract(ray: &Ray, hit: &Hit) -> Option<(Ray, Vector3D<f32>)> {
 
 	let ray_out_perp = (ray.dir + outward_normal * cos_theta) * ior;
 	let ray_out_parallel = outward_normal * -(1.0 - ray_out_perp.square_length()).abs().sqrt();
-	Some((
-		Ray::new(hit.point, ray_out_perp + ray_out_parallel),
+	(
+		Some(Ray::new(hit.point, ray_out_perp + ray_out_parallel)),
 		Vector3D::one(),
-	))
+	)
 }
 
 fn schlick(ray: &Ray, hit: &Hit) -> f32 {

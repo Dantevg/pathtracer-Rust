@@ -51,9 +51,6 @@ struct Args {
 fn main() {
 	let args = Args::parse();
 
-	let look_from = Point3D::new(-2.0, -2.0, 1.5);
-	let look_at = Point3D::new(0.0, 0.0, 0.0);
-
 	let mut shared_pixels = vec![0; (args.width * args.height * 4) as usize];
 
 	let progress_bar = Arc::new(Mutex::new(ProgressBar::new(args.samples_per_pixel as u64)));
@@ -87,8 +84,10 @@ fn main() {
 				continue;
 			}
 			pathtracers.push(scope.spawn(|| {
-				let scene = default_scene::make_scene();
-				let camera = Camera::new(
+				let mut scene = default_scene::make_scene();
+				let look_from = Point3D::new(-2.0, -2.0, 1.5);
+				let look_at = Point3D::new(0.0, 0.0, 0.0);
+				scene.camera = Camera::new(
 					look_from,
 					(look_at - look_from).normalize(),
 					args.width as f32 / args.height as f32,
@@ -97,7 +96,7 @@ fn main() {
 					(look_at - look_from).length(),
 				);
 				let mut pathtracer =
-					Pathtracer::new(args.width, args.height, args.max_bounces, camera, scene);
+					Pathtracer::new(args.width, args.height, args.max_bounces, scene);
 				for _j in 0..samples_per_thread {
 					pathtracer.render_single();
 					progress_bar.lock().unwrap().inc(1);

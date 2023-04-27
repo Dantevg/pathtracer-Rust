@@ -50,24 +50,6 @@ impl Hittable for HittableObject {
 	}
 }
 
-#[derive(Debug)]
-pub struct Scene(pub Vec<HittableObject>);
-
-impl Hittable for Scene {
-	fn hit(&self, ray: &Ray, range: Range<f32>) -> Option<Hit> {
-		let mut closest_hit = None;
-
-		for object in &self.0 {
-			let max_distance = closest_hit.as_ref().map_or(range.end, |h: &Hit| h.distance);
-			if let Some(hit) = object.hit(ray, range.start..max_distance) {
-				closest_hit = Some(hit);
-			}
-		}
-
-		closest_hit
-	}
-}
-
 #[derive(Debug, Clone)]
 pub struct Sphere {
 	pub centre: Point3D<f32>,
