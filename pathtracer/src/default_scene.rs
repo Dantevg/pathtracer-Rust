@@ -27,7 +27,7 @@ pub fn make_scene() -> Scene {
 		Sphere {
 			centre: Point3D::new(0.0, 0.0, 0.0),
 			radius: 0.5,
-			material: Material::diffuse(SolidColour::new(0.1, 0.2, 0.5).into()),
+			material: Material::dielectric(SolidColour::new(0.1, 0.2, 0.5).into(), 0.0),
 		}
 		.into(),
 		Sphere {
@@ -43,20 +43,20 @@ pub fn make_scene() -> Scene {
 		}
 		.into(),
 		Sphere {
-			centre: Point3D::new(0.0, 0.0, 5.0),
-			radius: 3.0,
-			material: Material::emissive(SolidColour::new(1.0, 1.0, 1.0).into()),
+			centre: Point3D::new(0.0, 1.0, 2.0),
+			radius: 1.0,
+			material: Material::emissive(SolidColour::new(2.0, 1.6, 1.5).into()),
 		}
 		.into(),
-		Triangle {
-			a: Point3D::new(0.5, 0.0, 0.0),
-			b: Point3D::new(0.5, -1.0, 0.0),
-			c: Point3D::new(0.5, 0.0, 1.0),
-			material: Material::transparent(SolidColour::new(0.8, 0.8, 0.8).into(), 0.0, 1.5),
-			// material: Material::diffuse(SolidColour::new(1.0, 1.0, 1.0).into()),
-			// material: Material::dielectric(SolidColour::new(1.0, 1.0, 1.0).into(), 0.2),
-		}
-		.into(),
+		// Triangle {
+		// 	a: Point3D::new(0.5, 0.0, 0.0),
+		// 	b: Point3D::new(0.5, -1.0, 0.0),
+		// 	c: Point3D::new(0.5, 0.0, 1.0),
+		// 	material: Material::transparent(SolidColour::new(0.8, 0.8, 0.8).into(), 0.0, 1.5),
+		// 	// material: Material::diffuse(SolidColour::new(1.0, 1.0, 1.0).into()),
+		// 	// material: Material::dielectric(SolidColour::new(1.0, 1.0, 1.0).into(), 0.2),
+		// }
+		// .into(),
 	];
 
 	let look_from = Point3D::new(-2.0, -2.0, 1.5);
@@ -73,6 +73,8 @@ pub fn make_scene() -> Scene {
 	Scene {
 		objects,
 		camera,
-		background_colour: Vector3D::new(0.1, 0.13, 0.2),
+		// background_colour: Vector3D::zero(),
+		background_colour: Vector3D::new(0.04, 0.06, 0.16),
+		// background_colour: Vector3D::new(0.5, 0.6, 0.8),
 	}
 }

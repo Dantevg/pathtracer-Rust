@@ -1,5 +1,3 @@
-use core::f32::consts::PI;
-
 use euclid::default::Vector3D;
 
 use crate::{
@@ -14,6 +12,9 @@ pub struct Material {
 	/// The base (albedo) texture of this material.
 	pub texture: AnyTexture,
 
+	/// The amount of light this texture emits.
+	pub emission: f32,
+
 	/// How metallic this material is. A value of `1.0` gives a fully specular
 	/// reflection tinted with the base colour, without diffuse reflection or
 	/// transmission. At `0.0` the material consists of a diffuse or
@@ -27,17 +28,14 @@ pub struct Material {
 	/// consists of a diffuse layer.
 	pub specular: f32,
 
-	/// How rough this material is. At `1.0`, specular and metallic reflections
-	/// will be fully rough, while reflections at `0.0` are completely sharp.
-	pub roughness: f32,
-
-	/// The amount of light this texture emits.
-	pub emission: f32,
-
 	/// How transparent the material is. At `1.0`, the material is fully
 	/// transparent and will only reflect at grazing angles. At `0.0`, the
 	/// material consists of a diffuse or specular reflection layer.
 	pub transparency: f32,
+
+	/// How rough this material is. At `1.0`, specular and metallic reflections
+	/// will be fully rough, while reflections at `0.0` are completely sharp.
+	pub roughness: f32,
 
 	/// The index of refraction for transmission.
 	pub ior: f32,
@@ -47,24 +45,24 @@ impl Material {
 	pub fn metal(texture: AnyTexture, roughness: f32) -> Material {
 		Material {
 			texture,
+			emission: 0.0,
 			metallic: 1.0,
 			specular: 0.0,
-			roughness,
-			emission: 0.0,
 			transparency: 0.0,
-			ior: 0.0,
+			roughness,
+			ior: 1.5,
 		}
 	}
 
 	pub fn dielectric(texture: AnyTexture, roughness: f32) -> Material {
 		Material {
 			texture,
+			emission: 0.0,
 			metallic: 0.0,
 			specular: 1.0,
-			roughness,
-			emission: 0.0,
 			transparency: 0.0,
-			ior: 0.0,
+			roughness,
+			ior: 1.5,
 		}
 	}
 
@@ -76,18 +74,18 @@ impl Material {
 			roughness: 0.0,
 			emission: 0.0,
 			transparency: 0.0,
-			ior: 0.0,
+			ior: 1.5,
 		}
 	}
 
 	pub fn transparent(texture: AnyTexture, roughness: f32, ior: f32) -> Material {
 		Material {
 			texture,
+			emission: 0.0,
 			metallic: 0.0,
 			specular: 1.0,
-			roughness,
-			emission: 0.0,
 			transparency: 1.0,
+			roughness,
 			ior,
 		}
 	}
@@ -95,12 +93,12 @@ impl Material {
 	pub fn emissive(texture: AnyTexture) -> Material {
 		Material {
 			texture,
+			emission: 1.0,
 			metallic: 0.0,
 			specular: 0.0,
-			roughness: 0.0,
-			emission: 1.0,
 			transparency: 0.0,
-			ior: 0.0,
+			roughness: 0.0,
+			ior: 1.5,
 		}
 	}
 }
@@ -110,12 +108,10 @@ pub fn bounce(ray: &Ray, hit: &Hit) -> (Option<Ray>, Vector3D<f32>) {
 		emissive(ray, hit)
 	} else if rand::random::<f32>() < hit.material.metallic {
 		metallic(ray, hit)
-	} else if rand::random::<f32>() < hit.material.specular {
-		if rand::random::<f32>() < (1.0 - schlick(ray, hit)) * hit.material.transparency {
-			refract(ray, hit)
-		} else {
-			specular(ray, hit)
-		}
+	} else if rand::random::<f32>() < hit.material.specular * schlick(ray, hit) {
+		specular(ray, hit)
+	} else if rand::random::<f32>() < hit.material.transparency {
+		refract(ray, hit)
 	} else {
 		diffuse(ray, hit)
 	}
@@ -154,7 +150,7 @@ fn specular(ray: &Ray, hit: &Hit) -> (Option<Ray>, Vector3D<f32>) {
 	}
 }
 
-fn diffuse(ray: &Ray, hit: &Hit) -> (Option<Ray>, Vector3D<f32>) {
+fn diffuse(_ray: &Ray, hit: &Hit) -> (Option<Ray>, Vector3D<f32>) {
 	let scattered_dir = hit.normal + util::random_unit_vector();
 	(
 		Some(Ray::new(hit.point, scattered_dir)),
