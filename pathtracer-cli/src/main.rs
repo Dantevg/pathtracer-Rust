@@ -125,6 +125,15 @@ fn main() {
 	let mut png_encoder = png::Encoder::new(file_writer, args.width, args.height);
 	png_encoder.set_color(png::ColorType::Rgba);
 	png_encoder.set_depth(png::BitDepth::Eight);
+	png_encoder
+		.add_text_chunk("pt_spp".to_string(), args.samples_per_pixel.to_string())
+		.unwrap();
+	png_encoder
+		.add_text_chunk("pt_fov".to_string(), args.fov.to_string())
+		.unwrap();
+	png_encoder
+		.add_text_chunk("pt_aperture".to_string(), args.aperture.to_string())
+		.unwrap();
 	let mut png_writer = png_encoder.write_header().unwrap();
 	png_writer.write_image_data(&canvas).unwrap();
 }
