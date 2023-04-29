@@ -43,31 +43,8 @@ struct Args {
 	scene: PathBuf,
 }
 
-fn main() {
+fn main() -> Result<(), ()> {
 	let args = Args::parse();
-
-	let scene_str = fs::read_to_string(args.scene).unwrap();
-	let scene: Scene = match toml::from_str(&scene_str) {
-		Ok(scene) => scene,
-		Err(err) => {
-			match err.span() {
-				Some(span) => {
-					let line = scene_str[..span.start]
-						.chars()
-						.filter(|&c| c == '\n')
-						.count() + 1;
-					eprintln!("Error in scene file at line {line}: {}", err.message())
-				}
-				None => eprintln!("Error in scene file: {}", err.message()),
-			};
-			return;
-		}
-	};
-
-	let mut shared_pixels = vec![0; (args.width * args.height * 4) as usize];
-
-	let progress_bar = Arc::new(Mutex::new(ProgressBar::new(args.samples_per_pixel as u64)));
-	let start_time = Instant::now();
 
 	if let Ok(max_threads) = thread::available_parallelism() {
 		if args.n_threads as usize > max_threads.get() {
@@ -84,6 +61,39 @@ fn main() {
 			args.n_threads, args.samples_per_pixel
 		)
 	}
+
+	let scene = get_scene(&args).ok_or(())?;
+	let canvas = render(&args, scene);
+	save(&args, canvas);
+
+	Ok(())
+}
+
+fn get_scene(args: &Args) -> Option<Scene> {
+	let scene_str = fs::read_to_string(args.scene.clone()).unwrap();
+	match toml::from_str(&scene_str) {
+		Ok(scene) => Some(scene),
+		Err(err) => {
+			match err.span() {
+				Some(span) => {
+					let line = scene_str[..span.start]
+						.chars()
+						.filter(|&c| c == '\n')
+						.count() + 1;
+					eprintln!("Error in scene file at line {line}: {}", err.message())
+				}
+				None => eprintln!("Error in scene file: {}", err.message()),
+			};
+			None
+		}
+	}
+}
+
+fn render(args: &Args, scene: Scene) -> Vec<u8> {
+	let mut shared_pixels = vec![0; (args.width * args.height * 4) as usize];
+
+	let progress_bar = Arc::new(Mutex::new(ProgressBar::new(args.samples_per_pixel as u64)));
+	let start_time = Instant::now();
 
 	let mut samples_left = args.samples_per_pixel;
 	let samples_per_thread = (args.samples_per_pixel as f32 / args.n_threads as f32).ceil() as u32;
@@ -122,7 +132,11 @@ fn main() {
 	progress_bar.lock().unwrap().finish_with_message("done");
 	println!("render time: {:?}", render_time.duration_since(start_time));
 
-	let file = File::create(args.output).unwrap();
+	canvas
+}
+
+fn save(args: &Args, canvas: Vec<u8>) {
+	let file = File::create(args.output.clone()).unwrap();
 	let ref mut file_writer = BufWriter::new(file);
 
 	let mut png_encoder = png::Encoder::new(file_writer, args.width, args.height);
