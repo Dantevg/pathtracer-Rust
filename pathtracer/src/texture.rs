@@ -1,4 +1,7 @@
+use std::{fs::File, path::PathBuf};
+
 use euclid::default::{Point3D, Vector2D, Vector3D};
+use serde::Deserialize;
 
 use crate::util;
 
@@ -6,7 +9,8 @@ pub trait Texture {
 	fn colour(&self, uv: Vector2D<f32>, point: Point3D<f32>) -> Vector3D<f32>;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
+#[serde(tag = "type")]
 pub enum AnyTexture {
 	SolidColour(SolidColour),
 	CheckerTexture(CheckerTexture),
@@ -25,7 +29,7 @@ impl Texture for AnyTexture {
 	}
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Deserialize)]
 pub struct SolidColour {
 	colour: Vector3D<f32>,
 }
@@ -50,7 +54,7 @@ impl Texture for SolidColour {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct CheckerTexture {
 	even: Box<AnyTexture>,
 	odd: Box<AnyTexture>,
@@ -86,7 +90,7 @@ impl Texture for CheckerTexture {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct UVTexture;
 
 impl From<UVTexture> for AnyTexture {
@@ -101,7 +105,8 @@ impl Texture for UVTexture {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
+#[serde(from = "SerializedImageTexture")]
 pub struct ImageTexture {
 	image: Box<[u8]>,
 	width: u32,
@@ -115,6 +120,21 @@ impl ImageTexture {
 			image,
 			width,
 			height,
+		}
+	}
+
+	pub fn from_path(path: PathBuf) -> Self {
+		let decoder = png::Decoder::new(File::open(path).unwrap());
+		let mut reader = decoder.read_info().unwrap();
+		let mut buf = vec![0; reader.output_buffer_size()];
+		let info = reader.next_frame(&mut buf).unwrap();
+
+		assert_eq!(info.bit_depth, png::BitDepth::Eight);
+
+		Self {
+			image: buf.into_boxed_slice(),
+			width: info.width,
+			height: info.height,
 		}
 	}
 }
@@ -132,5 +152,16 @@ impl Texture for ImageTexture {
 		let idx = (x + y * self.width as usize) * 3;
 
 		util::colour_u8_to_f32([self.image[idx], self.image[idx + 1], self.image[idx + 2]])
+	}
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct SerializedImageTexture {
+	image: PathBuf,
+}
+
+impl From<SerializedImageTexture> for ImageTexture {
+	fn from(value: SerializedImageTexture) -> Self {
+		ImageTexture::from_path(value.image)
 	}
 }

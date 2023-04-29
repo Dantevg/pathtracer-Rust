@@ -6,6 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-euclid = "0.22.9"
+euclid = { version = "0.22.9", features = ["serde"] }
 rand = "0.8.5"
 rgb = "0.8.36"
+serde = { version = "1.0.160", features = ["derive"] }
+png = "0.17.8"

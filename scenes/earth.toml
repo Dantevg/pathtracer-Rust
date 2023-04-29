@@ -1,0 +1,42 @@
+background_colour = [0.0, 0.0, 0.0]
+
+[[objects]]
+type = "Sphere"
+centre = [0.0, 0.0, 0.0]
+radius = 1.0
+
+[objects.material]
+emission = 0.0
+metallic = 0.0
+specular = 0.0
+transparency = 0.0
+roughness = 0.0
+ior = 1.5
+
+[objects.material.texture]
+type = "ImageTexture"
+image = "img/earthmap.png"
+
+[[objects]]
+type = "Sphere"
+centre = [0.0, 200.0, 100.0]
+radius = 50.0
+
+[objects.material]
+emission = 1.0
+metallic = 0.0
+specular = 0.0
+transparency = 0.0
+roughness = 0.0
+ior = 1.5
+
+[objects.material.texture]
+type = "SolidColour"
+colour = [50.0, 35.0, 35.0]
+
+[camera]
+pos = [2.0, 0.0, 1.5]
+look_at = [0.0, 0.0, 0.0]
+aspect_ratio = 1.0
+fov = 70.0
+aperture = 0.0

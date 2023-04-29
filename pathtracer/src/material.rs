@@ -1,4 +1,5 @@
 use euclid::default::Vector3D;
+use serde::Deserialize;
 
 use crate::{
 	hittable::Hit,
@@ -7,7 +8,7 @@ use crate::{
 	util,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Material {
 	/// The base (albedo) texture of this material.
 	pub texture: AnyTexture,

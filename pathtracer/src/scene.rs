@@ -1,6 +1,7 @@
 use core::ops::Range;
 
 use euclid::default::Vector3D;
+use serde::Deserialize;
 
 use crate::{
 	camera::Camera,
@@ -8,7 +9,7 @@ use crate::{
 	ray::Ray,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Scene {
 	pub objects: Vec<HittableObject>,
 	pub camera: Camera,

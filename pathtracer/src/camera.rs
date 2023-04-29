@@ -1,8 +1,10 @@
 use euclid::default::{Point3D, Vector3D};
+use serde::Deserialize;
 
 use crate::{ray::Ray, util};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Deserialize)]
+#[serde(from = "SerializedCamera")]
 pub struct Camera {
 	pos: Point3D<f32>,
 	dir: Vector3D<f32>,
@@ -43,6 +45,23 @@ impl Camera {
 		}
 	}
 
+	pub fn from_look_at(
+		pos: Point3D<f32>,
+		look_at: Point3D<f32>,
+		aspect_ratio: f32,
+		fov: f32,
+		aperture: f32,
+	) -> Self {
+		Self::new(
+			pos,
+			(look_at - pos).normalize(),
+			aspect_ratio,
+			fov,
+			aperture,
+			pos.distance_to(look_at),
+		)
+	}
+
 	pub fn get_ray(&self, u: f32, v: f32) -> Ray {
 		let rd = util::random_in_unit_disc() * (self.aperture / 2.0);
 		let offset = self.u * rd.x + self.v * rd.y;
@@ -63,5 +82,26 @@ impl Camera {
 
 	pub fn dir(&self) -> Vector3D<f32> {
 		self.dir
+	}
+}
+
+#[derive(Debug, Deserialize)]
+struct SerializedCamera {
+	pub pos: Point3D<f32>,
+	pub look_at: Point3D<f32>,
+	pub aspect_ratio: f32,
+	pub fov: f32,
+	pub aperture: f32,
+}
+
+impl From<SerializedCamera> for Camera {
+	fn from(value: SerializedCamera) -> Self {
+		Camera::from_look_at(
+			value.pos,
+			value.look_at,
+			value.aspect_ratio,
+			value.fov,
+			value.aperture,
+		)
 	}
 }

@@ -1,6 +1,7 @@
 use core::{f32::consts::PI, ops::Range};
 
 use euclid::default::{Point3D, Vector2D, Vector3D};
+use serde::Deserialize;
 
 use crate::{material::Material, ray::Ray};
 
@@ -37,7 +38,8 @@ pub trait Hittable {
 	fn hit(&self, ray: &Ray, range: Range<f32>) -> Option<Hit>;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Deserialize)]
+#[serde(tag = "type")]
 pub enum HittableObject {
 	Sphere(Sphere),
 	Triangle(Triangle),
@@ -52,7 +54,7 @@ impl Hittable for HittableObject {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Sphere {
 	pub centre: Point3D<f32>,
 	pub radius: f32,
@@ -101,7 +103,7 @@ impl Hittable for Sphere {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Triangle {
 	pub a: Point3D<f32>,
 	pub b: Point3D<f32>,

@@ -1,7 +1,5 @@
-mod earth_scene;
-
 use std::{
-	fs::File,
+	fs::{self, File},
 	io::BufWriter,
 	path::PathBuf,
 	sync::{Arc, Mutex},
@@ -10,11 +8,8 @@ use std::{
 };
 
 use clap::Parser;
-use euclid::default::Point3D;
 use indicatif::ProgressBar;
-use pathtracer::{camera::Camera, default_scene, Pathtracer};
-
-use crate::earth_scene::earth_scene;
+use pathtracer::{scene::Scene, Pathtracer};
 
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
@@ -39,21 +34,35 @@ struct Args {
 	#[arg(long = "bounces", default_value_t = 10)]
 	max_bounces: u32,
 
-	/// Field-of-view of the camera
-	#[arg(long, default_value_t = 70.0, alias = "field_of_view")]
-	fov: f32,
-
-	/// Aperture of the camera. 0.0 is fully sharp
-	#[arg(long, default_value_t = 0.1)]
-	aperture: f32,
-
-	/// The number of threads to use for rendering
+	/// Number of threads to use for rendering
 	#[arg(long = "threads", default_value_t = 1)]
 	n_threads: u32,
+
+	/// Path to scene.toml
+	#[arg(short = 'i', long, value_name = "FILE")]
+	scene: PathBuf,
 }
 
 fn main() {
 	let args = Args::parse();
+
+	let scene_str = fs::read_to_string(args.scene).unwrap();
+	let scene: Scene = match toml::from_str(&scene_str) {
+		Ok(scene) => scene,
+		Err(err) => {
+			match err.span() {
+				Some(span) => {
+					let line = scene_str[..span.start]
+						.chars()
+						.filter(|&c| c == '\n')
+						.count() + 1;
+					eprintln!("Error in scene file at line {line}: {}", err.message())
+				}
+				None => eprintln!("Error in scene file: {}", err.message()),
+			};
+			return;
+		}
+	};
 
 	let mut shared_pixels = vec![0; (args.width * args.height * 4) as usize];
 
@@ -87,24 +96,8 @@ fn main() {
 			if n_samples <= 0 {
 				continue;
 			}
+			let scene = scene.clone();
 			pathtracers.push(scope.spawn(|| {
-				// let scene = earth_scene(
-				// 	args.width as f32,
-				// 	args.height as f32,
-				// 	args.fov,
-				// 	args.aperture,
-				// );
-				let mut scene = default_scene::make_scene();
-				let look_from = Point3D::new(-1.0, -2.0, 1.5);
-				let look_at = Point3D::new(0.0, 0.0, 0.0);
-				scene.camera = Camera::new(
-					look_from,
-					(look_at - look_from).normalize(),
-					args.width as f32 / args.height as f32,
-					args.fov,
-					args.aperture,
-					(look_at - look_from).length(),
-				);
 				let mut pathtracer =
 					Pathtracer::new(args.width, args.height, args.max_bounces, scene);
 				for _j in 0..samples_per_thread {
@@ -136,13 +129,7 @@ fn main() {
 	png_encoder.set_color(png::ColorType::Rgba);
 	png_encoder.set_depth(png::BitDepth::Eight);
 	png_encoder
-		.add_text_chunk("pt_spp".to_string(), args.samples_per_pixel.to_string())
-		.unwrap();
-	png_encoder
-		.add_text_chunk("pt_fov".to_string(), args.fov.to_string())
-		.unwrap();
-	png_encoder
-		.add_text_chunk("pt_aperture".to_string(), args.aperture.to_string())
+		.add_text_chunk("spp".to_string(), args.samples_per_pixel.to_string())
 		.unwrap();
 	let mut png_writer = png_encoder.write_header().unwrap();
 	png_writer.write_image_data(&canvas).unwrap();

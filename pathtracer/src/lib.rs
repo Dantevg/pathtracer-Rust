@@ -1,5 +1,4 @@
 pub mod camera;
-pub mod default_scene;
 pub mod hittable;
 pub mod material;
 mod ray;

@@ -1,12 +1,14 @@
 use core::time::Duration;
 use std::{
+	fs,
+	path::PathBuf,
 	sync::{Arc, Mutex},
 	thread,
 };
 
 use clap::Parser;
-use euclid::default::{Point3D, Vector3D};
-use pathtracer::{camera::Camera, default_scene, Pathtracer};
+use euclid::default::Vector3D;
+use pathtracer::{scene::Scene, Pathtracer};
 use pixels::{Pixels, SurfaceTexture};
 use winit::{
 	dpi::PhysicalSize,
@@ -30,13 +32,9 @@ struct Args {
 	#[arg(long = "bounces", default_value_t = 10)]
 	max_bounces: u32,
 
-	/// Field-of-view of the camera
-	#[arg(long, default_value_t = 70.0, alias = "field_of_view")]
-	fov: f32,
-
-	/// Aperture of the camera. 0.0 is fully sharp
-	#[arg(long, default_value_t = 0.1)]
-	aperture: f32,
+	/// Path to scene.toml
+	#[arg(short = 'i', long, value_name = "FILE")]
+	scene: PathBuf,
 }
 
 fn move_cam(pt: &mut Pathtracer, by: Vector3D<f32>) {
@@ -45,22 +43,6 @@ fn move_cam(pt: &mut Pathtracer, by: Vector3D<f32>) {
 	pt.scene.camera.set_pos(pos + dir.component_mul(by));
 	pt.n_iterations = 0;
 	pt.pixels.fill(0);
-}
-
-fn create_pt(args: &Args) -> Pathtracer {
-	let mut scene = default_scene::make_scene();
-	let look_from = Point3D::new(-2.0, -2.0, 1.5);
-	let look_at = Point3D::new(0.0, 0.0, 0.0);
-	scene.camera = Camera::new(
-		look_from,
-		(look_at - look_from).normalize(),
-		args.width as f32 / args.height as f32,
-		args.fov,
-		args.aperture,
-		(look_at - look_from).length(),
-	);
-
-	Pathtracer::new(args.width, args.height, args.max_bounces, scene)
 }
 
 fn create_pixels(args: &Args, window: &Window) -> Pixels {
@@ -82,7 +64,28 @@ fn main() {
 		.build(&event_loop)
 		.unwrap();
 
-	let pathtracer = Arc::new(Mutex::new(create_pt(&args)));
+	let scene_str = fs::read_to_string(args.scene.clone()).unwrap();
+	let scene: Scene = match toml::from_str(&scene_str) {
+		Ok(scene) => scene,
+		Err(err) => {
+			match err.span() {
+				Some(span) => {
+					let line = scene_str[..span.start]
+						.chars()
+						.filter(|&c| c == '\n')
+						.count() + 1;
+					eprintln!("Error in scene file at line {line}: {}", err.message())
+				}
+				None => eprintln!("Error in scene file: {}", err.message()),
+			};
+			return;
+		}
+	};
+
+	let pathtracer = {
+		let pt = Pathtracer::new(args.width, args.height, args.max_bounces, scene.clone());
+		Arc::new(Mutex::new(pt))
+	};
 	let pixels = Arc::new(Mutex::new(create_pixels(&args, &window)));
 
 	{
@@ -109,7 +112,7 @@ fn main() {
 				// prevent deadlocks.
 				let mut pt = pathtracer.lock().unwrap();
 				let mut pixels = pixels.lock().unwrap();
-				*pt = create_pt(&args);
+				*pt = Pathtracer::new(args.width, args.height, args.max_bounces, scene.clone());
 				*pixels = create_pixels(&args, &window);
 			}
 			WindowEvent::KeyboardInput { input, .. } => {

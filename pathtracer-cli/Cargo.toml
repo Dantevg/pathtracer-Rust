@@ -11,3 +11,4 @@ clap = { version = "4.2.4", features = ["derive"] }
 png = "0.17.8"
 euclid = "0.22.9"
 indicatif = "0.17.3"
+toml = "0.7.3"
