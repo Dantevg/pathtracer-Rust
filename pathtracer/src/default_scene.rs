@@ -1,6 +1,6 @@
 use crate::{
 	camera::Camera,
-	hittable::{Sphere, Triangle},
+	hittable::Sphere,
 	material::Material,
 	scene::Scene,
 	texture::{CheckerTexture, SolidColour},

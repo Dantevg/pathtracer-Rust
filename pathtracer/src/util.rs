@@ -14,6 +14,10 @@ pub fn colour_f32_to_u32(colour_f32: Vector3D<f32>) -> [u32; 3] {
 	]
 }
 
+pub fn colour_u8_to_f32(colour_u8: [u8; 3]) -> Vector3D<f32> {
+	Vector3D::from(colour_u8).cast::<f32>() / 255.0
+}
+
 pub fn colour_scale_sqrt(colour: &[u32], scale: u32) -> [u8; 3] {
 	debug_assert_eq!(colour.len(), 3);
 	[

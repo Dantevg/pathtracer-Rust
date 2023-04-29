@@ -1,5 +1,7 @@
 use euclid::default::{Point3D, Vector2D, Vector3D};
 
+use crate::util;
+
 pub trait Texture {
 	fn colour(&self, uv: Vector2D<f32>, point: Point3D<f32>) -> Vector3D<f32>;
 }
@@ -8,6 +10,7 @@ pub trait Texture {
 pub enum AnyTexture {
 	SolidColour(SolidColour),
 	CheckerTexture(CheckerTexture),
+	ImageTexture(ImageTexture),
 	UVTexture(UVTexture),
 }
 
@@ -16,6 +19,7 @@ impl Texture for AnyTexture {
 		match self {
 			AnyTexture::SolidColour(t) => t.colour(uv, point),
 			AnyTexture::CheckerTexture(t) => t.colour(uv, point),
+			AnyTexture::ImageTexture(t) => t.colour(uv, point),
 			AnyTexture::UVTexture(t) => t.colour(uv, point),
 		}
 	}
@@ -94,5 +98,39 @@ impl From<UVTexture> for AnyTexture {
 impl Texture for UVTexture {
 	fn colour(&self, uv: Vector2D<f32>, _point: Point3D<f32>) -> Vector3D<f32> {
 		Vector3D::new(uv.x, uv.y, 0.0)
+	}
+}
+
+#[derive(Debug, Clone)]
+pub struct ImageTexture {
+	image: Box<[u8]>,
+	width: u32,
+	height: u32,
+}
+
+impl ImageTexture {
+	pub fn new(image: Box<[u8]>, width: u32, height: u32) -> Self {
+		assert_eq!(image.len(), (width * height * 3) as usize);
+		Self {
+			image,
+			width,
+			height,
+		}
+	}
+}
+
+impl From<ImageTexture> for AnyTexture {
+	fn from(value: ImageTexture) -> Self {
+		AnyTexture::ImageTexture(value)
+	}
+}
+
+impl Texture for ImageTexture {
+	fn colour(&self, uv: Vector2D<f32>, _point: Point3D<f32>) -> Vector3D<f32> {
+		let x = (uv.x * (self.width - 1) as f32) as usize;
+		let y = ((1.0 - uv.y) * (self.height - 1) as f32) as usize;
+		let idx = (x + y * self.width as usize) * 3;
+
+		util::colour_u8_to_f32([self.image[idx], self.image[idx + 1], self.image[idx + 2]])
 	}
 }

@@ -87,18 +87,16 @@ impl Hittable for Sphere {
 		}
 
 		let point = ray.at(distance);
-		let outward_normal = (point - self.centre) / self.radius;
+		let outward_normal = ((point - self.centre) / self.radius).normalize();
 		let theta = (-outward_normal.z).acos();
-		let phi = (-outward_normal.y).atan2(outward_normal.x) + PI;
-		let u = phi / (2.0 * PI);
-		let v = theta / PI;
+		let phi = outward_normal.y.atan2(outward_normal.x) + PI;
 
 		Some(Hit::new(
 			point,
 			outward_normal,
 			distance,
 			&self.material,
-			Vector2D::new(u, v),
+			Vector2D::new(phi / (2.0 * PI), theta / PI),
 		))
 	}
 }
