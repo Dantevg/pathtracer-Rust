@@ -56,7 +56,7 @@ struct Args {
 }
 
 fn earth_scene(width: f32, height: f32, fov: f32, aperture: f32) -> Scene {
-	let decoder = png::Decoder::new(File::open("earthmap.png").unwrap());
+	let decoder = png::Decoder::new(File::open("img/earthmap.png").unwrap());
 	let mut reader = decoder.read_info().unwrap();
 	let mut buf = vec![0; reader.output_buffer_size()];
 	let info = reader.next_frame(&mut buf).unwrap();
