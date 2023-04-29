@@ -74,7 +74,7 @@ pub fn make_scene() -> Scene {
 		objects,
 		camera,
 		// background_colour: Vector3D::zero(),
-		// background_colour: Vector3D::new(0.04, 0.06, 0.16),
-		background_colour: Vector3D::new(0.5, 0.6, 0.8),
+		background_colour: Vector3D::new(0.04, 0.06, 0.16),
+		// background_colour: Vector3D::new(0.5, 0.6, 0.8),
 	}
 }

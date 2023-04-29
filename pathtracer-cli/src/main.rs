@@ -1,3 +1,5 @@
+mod earth_scene;
+
 use std::{
 	fs::File,
 	io::BufWriter,
@@ -8,16 +10,11 @@ use std::{
 };
 
 use clap::Parser;
-use euclid::default::{Point3D, Vector3D};
+use euclid::default::Point3D;
 use indicatif::ProgressBar;
-use pathtracer::{
-	camera::Camera,
-	hittable::Sphere,
-	material::Material,
-	scene::Scene,
-	texture::{ImageTexture, SolidColour, UVTexture},
-	Pathtracer,
-};
+use pathtracer::{camera::Camera, default_scene, Pathtracer};
+
+use crate::earth_scene::earth_scene;
 
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
@@ -53,46 +50,6 @@ struct Args {
 	/// The number of threads to use for rendering
 	#[arg(long = "threads", default_value_t = 1)]
 	n_threads: u32,
-}
-
-fn earth_scene(width: f32, height: f32, fov: f32, aperture: f32) -> Scene {
-	let decoder = png::Decoder::new(File::open("img/earthmap.png").unwrap());
-	let mut reader = decoder.read_info().unwrap();
-	let mut buf = vec![0; reader.output_buffer_size()];
-	let info = reader.next_frame(&mut buf).unwrap();
-
-	assert_eq!(info.bit_depth, png::BitDepth::Eight);
-
-	let earth_material = Material::diffuse(
-		ImageTexture::new(buf.into_boxed_slice(), info.width, info.height).into(),
-	);
-	let sun_material = Material::emissive(SolidColour::new(50.0, 35.0, 35.0).into());
-	// let earth_material = Material::diffuse(UVTexture.into());
-	let earth = Sphere {
-		centre: Point3D::zero(),
-		radius: 1.0,
-		material: earth_material,
-	};
-	let sun = Sphere {
-		centre: Point3D::new(0.0, 200.0, 100.0),
-		radius: 50.0,
-		material: sun_material,
-	};
-	let look_from = Point3D::new(2.0, 0.0, 1.5);
-	let look_at = Point3D::new(0.0, 0.0, 0.0);
-	let camera = Camera::new(
-		look_from,
-		(look_at - look_from).normalize(),
-		width / height,
-		fov,
-		aperture,
-		(look_at - look_from).length(),
-	);
-	Scene {
-		objects: vec![earth.into(), sun.into()],
-		camera,
-		background_colour: Vector3D::zero(),
-	}
 }
 
 fn main() {
@@ -131,11 +88,22 @@ fn main() {
 				continue;
 			}
 			pathtracers.push(scope.spawn(|| {
-				let scene = earth_scene(
-					args.width as f32,
-					args.height as f32,
+				// let scene = earth_scene(
+				// 	args.width as f32,
+				// 	args.height as f32,
+				// 	args.fov,
+				// 	args.aperture,
+				// );
+				let mut scene = default_scene::make_scene();
+				let look_from = Point3D::new(-1.0, -2.0, 1.5);
+				let look_at = Point3D::new(0.0, 0.0, 0.0);
+				scene.camera = Camera::new(
+					look_from,
+					(look_at - look_from).normalize(),
+					args.width as f32 / args.height as f32,
 					args.fov,
 					args.aperture,
+					(look_at - look_from).length(),
 				);
 				let mut pathtracer =
 					Pathtracer::new(args.width, args.height, args.max_bounces, scene);
