@@ -175,9 +175,14 @@ fn refract(ray: &Ray, hit: &Hit) -> (Option<Ray>, Vector3D<f32>) {
 
 	let ray_out_perp = (ray.dir + outward_normal * cos_theta) * ior;
 	let ray_out_parallel = outward_normal * -(1.0 - ray_out_perp.square_length()).abs().sqrt();
+	let refracted_dir = ray_out_perp + ray_out_parallel;
+	let new_ray = Ray::new(
+		hit.point,
+		refracted_dir + util::random_in_unit_sphere() * hit.material.roughness,
+	);
 	(
-		Some(Ray::new(hit.point, ray_out_perp + ray_out_parallel)),
-		Vector3D::one(),
+		Some(new_ray),
+		hit.material.texture.colour(hit.uv, hit.point),
 	)
 }
 

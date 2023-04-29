@@ -33,7 +33,7 @@ pub fn make_scene() -> Scene {
 		Sphere {
 			centre: Point3D::new(-1.0, 0.0, 0.0),
 			radius: 0.5,
-			material: Material::transparent(SolidColour::new(0.8, 0.8, 0.8).into(), 0.0, 1.5),
+			material: Material::transparent(SolidColour::new(0.8, 0.35, 0.35).into(), 0.05, 1.5),
 		}
 		.into(),
 		Sphere {
@@ -74,7 +74,7 @@ pub fn make_scene() -> Scene {
 		objects,
 		camera,
 		// background_colour: Vector3D::zero(),
-		background_colour: Vector3D::new(0.04, 0.06, 0.16),
-		// background_colour: Vector3D::new(0.5, 0.6, 0.8),
+		// background_colour: Vector3D::new(0.04, 0.06, 0.16),
+		background_colour: Vector3D::new(0.5, 0.6, 0.8),
 	}
 }
