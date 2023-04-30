@@ -2,13 +2,12 @@ use std::{
 	fs::{self, File},
 	io::BufWriter,
 	path::PathBuf,
-	sync::{Arc, Mutex},
 	thread,
 	time::Instant,
 };
 
 use clap::Parser;
-use indicatif::ProgressBar;
+use indicatif::{ProgressBar, ProgressStyle};
 use pathtracer::{scene::Scene, Pathtracer};
 
 #[derive(Debug, Parser)]
@@ -92,7 +91,11 @@ fn get_scene(args: &Args) -> Option<Scene> {
 fn render(args: &Args, scene: Scene) -> Vec<u8> {
 	let mut shared_pixels = vec![0; (args.width * args.height * 4) as usize];
 
-	let progress_bar = Arc::new(Mutex::new(ProgressBar::new(args.samples_per_pixel as u64)));
+	let progress_bar = ProgressBar::new(args.samples_per_pixel as u64).with_style(
+		ProgressStyle::with_template("▕{wide_bar}▏{pos:>4}/{len:4} ETA {eta} ")
+			.unwrap()
+			.progress_chars("█▉▊▋▌▍▎▏ "),
+	);
 	let start_time = Instant::now();
 
 	let mut samples_left = args.samples_per_pixel;
@@ -104,15 +107,16 @@ fn render(args: &Args, scene: Scene) -> Vec<u8> {
 			let n_samples = samples_per_thread.min(samples_left);
 			samples_left -= n_samples;
 			if n_samples <= 0 {
-				continue;
+				break;
 			}
 			let scene = scene.clone();
-			pathtracers.push(scope.spawn(|| {
+			let progress_bar = progress_bar.clone();
+			pathtracers.push(scope.spawn(move || {
 				let mut pathtracer =
 					Pathtracer::new(args.width, args.height, args.max_bounces, scene);
-				for _j in 0..samples_per_thread {
+				for _j in 0..n_samples {
 					pathtracer.render_single();
-					progress_bar.lock().unwrap().inc(1);
+					progress_bar.inc(1);
 				}
 				pathtracer
 			}));
@@ -129,7 +133,7 @@ fn render(args: &Args, scene: Scene) -> Vec<u8> {
 	let mut canvas: Vec<u8> = vec![0; (args.width * args.height * 4) as usize];
 	pathtracer::draw_pixels_to_canvas(&shared_pixels, &mut canvas, args.samples_per_pixel);
 
-	progress_bar.lock().unwrap().finish_with_message("done");
+	progress_bar.finish_with_message("done");
 	println!("render time: {:?}", render_time.duration_since(start_time));
 
 	canvas
